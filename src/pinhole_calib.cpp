@@ -1,6 +1,6 @@
 //
-// function：进行双目内外的标定和双目矫正,将内外参数和矫正参数存入标定文件夹下的calib_result.txt文件中
-// usage：./stereo_calib -w=<board_width default=11> -h=<board_height default=8> -s=<square_size default=15> -d=<dir default=/home/shenyl/Documents/sweeper/data/> -show=<if_show default=False>
+// function：进行单目标定,将参数存入指定文件夹下的指定yaml文件中
+// usage：./pinhole_calib -w=<board_width default=11> -h=<board_height default=8> -s=<square_size default=15> -d=<dir default=/home/shenyl/Documents/sweeper/data/> -show=<if_show default=False>
 //
 #include "opencv2/core/core.hpp"
 #include "opencv2/imgproc/imgproc.hpp"
