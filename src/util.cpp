@@ -97,15 +97,12 @@ void getSortedImages(const boost::filesystem::path &img_dir, function<bool(const
         filename = (img_dir / filename).string();
 }
 
-void getStereoSortedImages(const string root_path,vector<std::string> &img_l_paths, vector<std::string> &img_r_paths)
+void getStereoSortedImages(const string img_dir, vector<std::string> &img_paths)
 {
-    boost::filesystem::path dataset_base(root_path);
+    boost::filesystem::path dataset_base(img_dir);
     if (!boost::filesystem::exists(dataset_base) ||
         !boost::filesystem::is_directory(dataset_base))
         throw std::runtime_error("[Dataset] Invalid directory");
-
-    boost::filesystem::path img_l_dir = dataset_base / "left";
-    boost::filesystem::path img_r_dir = dataset_base / "right";
 
     boost::regex expression("^[^0-9]*([0-9]+\\.?+[0-9]*)[^0-9]*\\.[a-z]{3,4}$");
     boost::cmatch what;
@@ -129,8 +126,7 @@ void getStereoSortedImages(const string root_path,vector<std::string> &img_l_pat
         return (n1 < n2);
     };
 
-    getSortedImages(img_l_dir, filename_filter, sort_by_number, img_l_paths);
-    getSortedImages(img_r_dir, filename_filter, sort_by_number, img_r_paths);
+    getSortedImages(img_dir, filename_filter, sort_by_number, img_paths);
 }
 
 

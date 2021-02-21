@@ -14,6 +14,12 @@
 using namespace cv;
 using namespace std;
 
+
+#define W 11
+#define H 8
+#define S 15
+#define AVG_ERR_TOLERANCE 0.203294*1.5
+
 static int print_help() {
     cout <<
          " Given a list of chessboard images, the number of corners (nx, ny)\n"
@@ -39,103 +45,132 @@ static int print_help() {
 	chessboardSize	棋盘上每个方格的边长（mm）
 注意：亚像素精确化时，允许输入单通道，8位或者浮点型图像。由于输入图像的类型不同，下面用作标定函数参数的内参数矩阵和畸变系数矩阵在初始化时也要数据注意类型。
 */
-bool singleCameraCalibrate(vector<std::string> img_paths, string singleCalibrateResult,
-                           vector<vector<Point3f>> &objectPoints,
-                           vector<vector<Point2f>> &corners_seq, Mat &cameraMatrix, Mat &distCoeffs, Size &imageSize,
-                           Size patternSize, Size chessboardSize) {
+class Pinhole
+{
+public:
+    //Constructor
+    Pinhole(const string root_dir, const string img_subdir):root_dir(root_dir),img_subdir(img_subdir){
+        getStereoSortedImages(root_dir + img_subdir, img_paths);
+    }
+
+    std::string root_dir;
+    std::string img_subdir;
+    vector<std::string> img_paths;
     int n_boards = 0;
-    ofstream resultStore(singleCalibrateResult); // 保存标定结果的txt
-    // 开始提取角点坐标
-    vector<Point2f> corners; // 存放一张图片的角点坐标
-    // 读取的标定图片的名称
-    for (auto imageName:img_paths) {
+    vector<vector<Point3f>> objectPoints;
+    vector<vector<Point2f>> corners_seq;
+    Mat cameraMatrix;
+    Mat distCoeffs;
+    Size imageSize;
+    Size patternSize = Size(W, H);
+    Size chessboardSize = Size(S, S);
+    vector<double> errors;
+    double avgErr;
+    bool isCali = false;
+    //functions
+    void setParameter(){
+        vector<Point2f> corners; // 存放一张图片的角点坐标
+        // 对每张图片，计算棋盘内格点像素坐标，并存入corners_seq
+        for (auto imageName:img_paths) {
 //        cout<<"img_name"<<imageName<<endl;
-        Mat imageInput = imread(imageName);
-        cvtColor(imageInput, imageInput, CV_RGB2GRAY);
-        imageSize.width = imageInput.cols; // 获取图片的宽度
-        imageSize.height = imageInput.rows; // 获取图片的高度
-        // 查找标定板的角点
-        bool found = findChessboardCorners(imageInput, patternSize,
-                                           corners); // 最后一个参数int flags的缺省值为：CALIB_CB_ADAPTIVE_THRESH | CALIB_CB_NORMALIZE_IMAGE
-        // 亚像素精确化。在findChessboardCorners中自动调用了cornerSubPix，为了更加精细化，我们自己再调用一次。
-        if (found) // 当所有的角点都被找到
-        {
-            TermCriteria criteria = TermCriteria(CV_TERMCRIT_EPS + CV_TERMCRIT_ITER, 40,
-                                                 0.001); // 终止标准，迭代40次或者达到0.001的像素精度
-            cornerSubPix(imageInput, corners, Size(11, 11), Size(-1, -1),
-                         criteria);// 由于我们的图像只存较大，将搜索窗口调大一些，（11， 11）为真实窗口的一半，真实大小为（11*2+1， 11*2+1）--（23， 23）
-            corners_seq.push_back(corners); // 存入角点序列
-            // 绘制角点
-            drawChessboardCorners(imageInput, patternSize, corners, true);
+            Mat imageInput = imread(imageName);
+            cvtColor(imageInput, imageInput, CV_RGB2GRAY);
+            imageSize.width = imageInput.cols; // 获取图片的宽度
+            imageSize.height = imageInput.rows; // 获取图片的高度
+            // 查找标定板的角点
+            bool found = findChessboardCorners(imageInput, patternSize,
+                                               corners); // 最后一个参数int flags的缺省值为：CALIB_CB_ADAPTIVE_THRESH | CALIB_CB_NORMALIZE_IMAGE
+            // 亚像素精确化。在findChessboardCorners中自动调用了cornerSubPix，为了更加精细化，我们自己再调用一次。
+            if (found) // 当所有的角点都被找到
+            {
+                TermCriteria criteria = TermCriteria(CV_TERMCRIT_EPS + CV_TERMCRIT_ITER, 40,
+                                                     0.001); // 终止标准，迭代40次或者达到0.001的像素精度
+                cornerSubPix(imageInput, corners, Size(11, 11), Size(-1, -1),
+                             criteria);// 由于我们的图像只存较大，将搜索窗口调大一些，（11， 11）为真实窗口的一半，真实大小为（11*2+1， 11*2+1）--（23， 23）
+                corners_seq.push_back(corners); // 存入角点序列
+                // 绘制角点
+                drawChessboardCorners(imageInput, patternSize, corners, true);
 //            imshow("cornersframe", imageInput);
-            n_boards++;
-            //cout<<"img_name"<<imageName<<endl;
+                n_boards++;
+                //cout<<"img_name"<<imageName<<endl;
 //
 //            if (waitKey(0) == 27)
 //            {
 //                destroyWindow("cornersframe");
 //            }
-        } else
-            cout << "fail to detect. img_name " << imageName << endl;
-    }
-    //destroyWindow("cornersframe");
-    // 进行相机标定
-    // 计算角点对应的三维坐标
-    int pic, i, j;
-    for (pic = 0; pic < n_boards; pic++) {
-        vector<Point3f> realPointSet;
-        for (i = 0; i < patternSize.height; i++) {
-            for (j = 0; j < patternSize.width; j++) {
-                Point3f realPoint;
-                // 假设标定板位于世界坐标系Z=0的平面
-                realPoint.x = j * chessboardSize.width;
-                realPoint.y = i * chessboardSize.height;
-                realPoint.z = 0;
-                realPointSet.push_back(realPoint);
+            } else
+                cout << "fail to detect. img_name " << imageName << endl;
+        }
+        // 计算棋盘内格点世界坐标（都一样的，但为了满足calibrateCamera输入，所以弄成vector of vector；为了模块化，所以每个Pinhole都算一遍）
+        for (int pic = 0; pic < n_boards; pic++) {
+            vector<Point3f> realPointSet;
+            for (int i = 0; i < patternSize.height; i++) {
+                for (int j = 0; j < patternSize.width; j++) {
+                    Point3f realPoint;
+                    // 假设标定板位于世界坐标系Z=0的平面
+                    realPoint.x = j * chessboardSize.width;
+                    realPoint.y = i * chessboardSize.height;
+                    realPoint.z = 0;
+                    realPointSet.push_back(realPoint);
+                }
             }
+            objectPoints.push_back(realPointSet);
         }
-        objectPoints.push_back(realPointSet);
-    }
-    // 执行标定程序
-    cout << "start to calib" << endl;
-    vector<Mat> rvec; // 旋转向量
-    vector<Mat> tvec; // 平移向量
-    cout << "object point num" << endl << objectPoints.size() << endl;
-    cout << "corners_seq num" << endl << corners_seq.size() << endl;
-    calibrateCamera(objectPoints, corners_seq, imageSize, cameraMatrix, distCoeffs, rvec, tvec, 0);
-    // 保存标定结果
-    resultStore << "相机内参数矩阵" << endl;
-    resultStore << cameraMatrix << endl << endl;
-    resultStore << "相机畸变系数" << endl;
-    resultStore << distCoeffs << endl << endl;
-    // 计算重投影点，与原图角点比较，得到误差
-    double errPerImage = 0.; // 每张图像的误差
-    double errAverage = 0.; // 所有图像的平均误差
-    double totalErr = 0.; // 误差总和
-    vector<Point2f> projectImagePoints; // 重投影点
-    for (i = 0; i < n_boards; i++) {
-        vector<Point3f> tempObjectPoints = objectPoints[i]; // 临时三维点
-        // 计算重投影点
-        projectPoints(tempObjectPoints, rvec[i], tvec[i], cameraMatrix, distCoeffs, projectImagePoints);
-        // 计算新的投影点与旧的投影点之间的误差
-        vector<Point2f> tempCornersPoints = corners_seq[i];// 临时存放旧投影点
-        Mat tempCornersPointsMat = Mat(1, tempCornersPoints.size(), CV_32FC2); // 定义成两个通道的Mat是为了计算误差
-        Mat projectImagePointsMat = Mat(1, projectImagePoints.size(), CV_32FC2);
-        // 赋值
-        for (int j = 0; j < tempCornersPoints.size(); j++) {
-            projectImagePointsMat.at<Vec2f>(0, j) = Vec2f(projectImagePoints[j].x, projectImagePoints[j].y);
-            tempCornersPointsMat.at<Vec2f>(0, j) = Vec2f(tempCornersPoints[j].x, tempCornersPoints[j].y);
+        // 执行标定程序
+        cout << "start to calib" << endl;
+        vector<Mat> rvec; // 旋转向量
+        vector<Mat> tvec; // 平移向量
+        cout << "object point num" << endl << objectPoints.size() << endl;
+        cout << "corners_seq num" << endl << corners_seq.size() << endl;
+        calibrateCamera(objectPoints, corners_seq, imageSize, cameraMatrix, distCoeffs, rvec, tvec, 0);
+        // 计算重投影点，与原图角点比较，得到误差
+        double totalErr = 0.; // 误差总和
+        vector<Point2f> projectImagePoints; // 重投影点
+        for (int i = 0; i < n_boards; i++) {
+            vector<Point3f> tempObjectPoints = objectPoints[i]; // 临时三维点
+            // 计算重投影点
+            projectPoints(tempObjectPoints, rvec[i], tvec[i], cameraMatrix, distCoeffs, projectImagePoints);
+            // 计算新的投影点与旧的投影点之间的误差
+            vector<Point2f> tempCornersPoints = corners_seq[i];// 临时存放旧投影点
+            Mat tempCornersPointsMat = Mat(1, tempCornersPoints.size(), CV_32FC2); // 定义成两个通道的Mat是为了计算误差
+            Mat projectImagePointsMat = Mat(1, projectImagePoints.size(), CV_32FC2);
+            // 赋值
+            for (int j = 0; j < tempCornersPoints.size(); j++) {
+                projectImagePointsMat.at<Vec2f>(0, j) = Vec2f(projectImagePoints[j].x, projectImagePoints[j].y);
+                tempCornersPointsMat.at<Vec2f>(0, j) = Vec2f(tempCornersPoints[j].x, tempCornersPoints[j].y);
+            }
+            // opencv里的norm函数其实把这里的两个通道分别分开来计算的(X1-X2)^2的值，然后统一求和，最后进行根号
+            errors.push_back(norm(tempCornersPointsMat, projectImagePointsMat, NORM_L2) / (patternSize.width * patternSize.height));
+            totalErr += errors[errors.size()-1];
+            avgErr = totalErr / n_boards;
         }
-        // opencv里的norm函数其实把这里的两个通道分别分开来计算的(X1-X2)^2的值，然后统一求和，最后进行根号
-        errPerImage =
-                norm(tempCornersPointsMat, projectImagePointsMat, NORM_L2) / (patternSize.width * patternSize.height);
-        totalErr += errPerImage;
-        resultStore << "第" << i + 1 << "张图像的平均误差为：" << errPerImage << endl;
+        //判断标定是否成功
+        if(avgErr < AVG_ERR_TOLERANCE){
+            isCali = true;
+        }
     }
-    resultStore << "全局平局误差为：" << totalErr / n_boards << endl;
-    resultStore.close();
-    return true;
-}
+
+    void printInfo(){
+        createDirectory(root_dir + "result/");
+        FileStorage PinholeCalibr(root_dir + "result/PinHoleCalibrationResults.txt", FileStorage::WRITE);
+        // 保存标定结果
+        PinholeCalibr << "相机内参数矩阵";
+        PinholeCalibr << cameraMatrix;
+        PinholeCalibr << "\n";
+        PinholeCalibr << "相机畸变系数";
+        PinholeCalibr << distCoeffs;
+        PinholeCalibr << "\n";
+        for (int i = 0; i < n_boards; i++) {
+            PinholeCalibr << "第" << i + 1 << "张图像的平均误差为：" << errors[i] << endl;
+        }
+        PinholeCalibr << "全局平均误差为：" << avgErr << endl;
+        PinholeCalibr.release();
+    }
+
+    void writeYaml(){
+
+    }
+};
 
 /*
 双目标定:计算两摄像机相对旋转矩阵 R,平移向量 T, 本征矩阵E, 基础矩阵F
@@ -303,12 +338,7 @@ int main(int argc, char *argv[]) {
         parser.printMessage();
         return 0;
     }
-    string root_path = parser.get<string>("d");
-    string root_result_path = root_path + "/result/";
-    createDirectory(root_result_path);
 
-    string singleCalibrate_result_L = root_result_path + "calibrationresults_L.txt";
-    string singleCalibrate_result_R = root_result_path + "calibrationresults_R.txt";
     string stereoRectifyParams = root_result_path + "stereoRectifyParams.txt"; // 存放立体矫正结果
     string stereoCalibrate_result_L = root_result_path + "stereocalibrateresult_L.txt";
 
@@ -323,8 +353,23 @@ int main(int argc, char *argv[]) {
     Mat distCoeffs_L = Mat(1, 5, CV_32FC1, Scalar::all(0)); // 相机的畸变系数
     Mat distCoeffs_R = Mat(1, 5, CV_32FC1, Scalar::all(0)); // 初始化相机的畸变系数
 
-    vector<std::string> img_l_paths, img_r_paths;
-    getStereoSortedImages(root_path, img_l_paths, img_r_paths);
+    //-------------------------------------------New Code Start-------------------------------------
+    string root_dir = "/home/warren/Documents/CLionProj/Camra_Calibration/stereo_calibr/cali/";
+    Pinhole PinL(root_dir, "left"), PinR(root_dir, "right");
+    bool isNewCali = true;
+
+    PinL.setParameter();
+    PinR.setParameter();
+
+    if(PinL.isCali && PinR.isCali){
+        PinL.printInfo();
+        PinR.printInfo();
+        PinL.writeYaml();
+        PinR.writeYaml();
+        isNewCali = false;
+    }
+
+    //----------------------------------------New Code End-------------------------------------------
 
     vector<vector<Point3f>> objectPoints_L; // 三维坐标
     vector<vector<Point3f>> objectPoints_R;

@@ -39,6 +39,6 @@ string getDirEnd(string dataset_dir);
 string removeExtension(string filewhole);
 void getSortedImages(const boost::filesystem::path &img_dir, std::function<bool(const std::string &)> filter,
                      std::function<bool(const std::string &, const std::string &)> comparator, std::vector<std::string> &img_paths);
-void getStereoSortedImages(const string root_path,vector<std::string> &img_l_paths, vector<std::string> &img_r_paths);
+void getStereoSortedImages(const string root_path,vector<std::string> &img_paths);
 void  CheckStereoCali(string root_path, string configYaml);
 #endif //RENAMEIMAGE_UTIL_H
