@@ -223,7 +223,9 @@ void  CheckStereoCali(string root_path, string configYaml)
 
     vector<std::string> img_l_paths, img_r_paths;
     Mat img1_rectified, img2_rectified; // 校正图像
-    getStereoSortedImages(root_path, img_l_paths, img_r_paths);
+    getStereoSortedImages(root_path + "left/", img_l_paths);
+    getStereoSortedImages(root_path + "right/", img_r_paths);
+
 
     cv::Mat K_l, K_r, P_l, P_r, R_l, R_r, D_l, D_r;
     fsSettings["LEFT_K"] >> K_l;
