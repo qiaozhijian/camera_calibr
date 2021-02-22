@@ -25,24 +25,12 @@ using namespace std;
 #define AVG_ERR_TOLERANCE 0.203294*1.5
 
 
-/*
-单目标定
-参数：
-	imageList		存放标定图片名称的txt
-	singleCalibrateResult	存放标定结果的txt
-	objectPoints	世界坐标系中点的坐标
-	corners_seq		存放图像中的角点,用于立体标定
-	cameraMatrix	相机的内参数矩阵
-	distCoeffs		相机的畸变系数
-	imageSize		输入图像的尺寸（像素）
-	patternSize		标定板每行的角点个数, 标定板每列的角点个数 (9, 6)
-	chessboardSize	棋盘上每个方格的边长（mm）
-注意：亚像素精确化时，允许输入单通道，8位或者浮点型图像。由于输入图像的类型不同，下面用作标定函数参数的内参数矩阵和畸变系数矩阵在初始化时也要数据注意类型。
-*/
+
 class Pinhole
 {
 public:
     //Constructor
+    Pinhole();
     Pinhole(const string img_dir, const string yaml_dir, const string yaml_name):
             yaml_dir(yaml_dir), yaml_name(yaml_name){
         getStereoSortedImages(img_dir, img_paths);
@@ -54,14 +42,14 @@ public:
     vector<std::string> img_paths;
     int n_boards = 0;
     vector<vector<Point3f>> objectPoints;
-    vector<vector<Point2f>> corners_seq;
+    vector<vector<Point2f>> imagePoints;
     Mat cameraMatrix;
     Mat distCoeffs;
     Size imageSize;
     Size patternSize = Size(W, H);
     Size chessboardSize = Size(S, S);
     vector<double> errors;
-    double avgErr;
+    double avgErr = 0;
     bool isCali = false;
 
     //Functions
@@ -101,6 +89,8 @@ public:
     Pinhole &pinhole_l;
     Pinhole &pinhole_r;
     Mat R, T, E, F, R1, R2, P1, P2, Q;
+    Rect validRoi[2];
+    Mat map_l1, map_l2, map_r1, map_r2;
     bool isCali = 0;
 
     void setParameter();

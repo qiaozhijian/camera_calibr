@@ -39,5 +39,8 @@ int main(int argc, char *argv[]) {
         pinhole.printInfo();
         pinhole.writeYaml();
     }
+    else{
+        cout << "单目标定失败" << endl;
+    }
     return 0;
 }

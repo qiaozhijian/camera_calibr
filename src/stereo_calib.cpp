@@ -46,12 +46,13 @@ int main(int argc, char *argv[]) {
         //双目标定
         Stereo stereo(pinhole_left, pinhole_right, "Stereo.yaml");//
         stereo.setParameter();//
-        if(stereo.isCali())//
+        if(stereo.isCali)//
         {
             stereo.printInfo();//
             stereo.writeYaml();//
         }else{
-            cout<<""< }
+            cerr << "双目标定失败" << endl;
+        }
     }
     else{//至少一目标定失败
         if(!pinhole_left.isCali){
@@ -61,5 +62,5 @@ int main(int argc, char *argv[]) {
             cerr << "右目标定失败" << endl;
         }
     }
-
+    return 0;
 }
