@@ -1,6 +1,6 @@
 //
 // function：进行双目内外的标定和双目矫正,将内外参数和矫正参数存入标定文件夹下的calib_result.txt文件中
-// usage：./stereo_calib -w=<board_width default=11> -h=<board_height default=8> -s=<square_size default=15> -d=<dir default=/home/shenyl/Documents/sweeper/data/> -show=<if_show default=False>
+// usage：./stereo_calib
 //
 #include "opencv2/core/core.hpp"
 #include "opencv2/imgproc/imgproc.hpp"
@@ -36,7 +36,9 @@ int main(int argc, char *argv[]) {
     Pinhole pinhole_left(root_dir+"left/", root_dir+"result/", "PinholeLeft.yaml");
     Pinhole pinhole_right(root_dir+"right/", root_dir+"result/", "PinholeRight.yaml");
     //单目标定
+    cout << "开始左目标定" << endl;
     pinhole_left.setParameter();
+    cout << "开始右目标定" << endl;
     pinhole_right.setParameter();
     if(pinhole_left.isCali && pinhole_right.isCali){//单目标定成功
         cout << "左目标定结果:" << endl;

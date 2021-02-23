@@ -32,6 +32,7 @@ void Pinhole::setParameter(){
     	chessboardSize	棋盘上每个方格的边长（mm）
     注意：亚像素精确化时，允许输入单通道，8位或者浮点型图像。由于输入图像的类型不同，下面用作标定函数参数的内参数矩阵和畸变系数矩阵在初始化时也要数据注意类型。
     */
+    cout << "开始单目标定" << endl;
     vector<Point2f> corners; // 存放一张图片的角点坐标
     // 对每张图片，计算棋盘内格点像素坐标，并存入corners_seq
     for (auto imageName:img_paths) {
@@ -110,6 +111,10 @@ void Pinhole::setParameter(){
     //判断标定是否成功
     if(avgErr < AVG_ERR_TOLERANCE){
         isCali = true;
+        cout << "单目标定成功" << endl;
+    }
+    else{
+        cerr << "单目标定失败" << endl;
     }
 }
 
@@ -128,15 +133,15 @@ void Pinhole::printInfo(){
 
 void Pinhole::writeYaml(){
     FileStorage storage(yaml_dir + yaml_name, FileStorage::WRITE);
-    storage << "#--------------------------------------------------------------------------------------------";
-    storage << "# Camera Parameters. Adjust them!";
-    storage << "#--------------------------------------------------------------------------------------------\n";
+    //#--------------------------------------------------------------------------------------------";
+    //# Camera Parameters. Adjust them!";
+    //#--------------------------------------------------------------------------------------------";
 
-    storage << "# Camera calibration and distortion parameters (OpenCV)";
+    //# Camera calibration and distortion parameters (OpenCV)";
     storage << "Camera_fx" << cameraMatrix.at<double>(0,0);
     storage << "Camera_fy" << cameraMatrix.at<double>(1,1);
     storage << "Camera_cx" << cameraMatrix.at<double>(0,2);
-    storage << "Camera_cy" << cameraMatrix.at<double>(1,2) << "\n";
+    storage << "Camera_cy" << cameraMatrix.at<double>(1,2);
 
     storage << "Camera_k1" << distCoeffs.at<double>(0,0);
     storage << "Camera_k2" << distCoeffs.at<double>(0,1);
@@ -145,39 +150,39 @@ void Pinhole::writeYaml(){
     storage << "Camera_k3" << distCoeffs.at<double>(0,4);
 
     storage << "Camera_width" << imageSize.width;
-    storage << "Camera_height" << imageSize.height << "\n";
+    storage << "Camera_height" << imageSize.height;
 
     //以下参数还有待根据具体情况决定怎么算
-    storage << "###-----STARTING FROM THIS LINE, PARAMETERS ARE NOT CALCULATED YET! TO BE MODIFIED!------";
-    storage << "# Camera frames per second";
-    storage << "Camera_fps" << 20.0 << "\n";
+    //###-----STARTING FROM THIS LINE, PARAMETERS ARE NOT CALCULATED YET! TO BE MODIFIED!------";
+    //# Camera frames per second";
+    storage << "Camera_fps" << 20.0;
 
-    storage << "# Color order of the images (0: BGR, 1: RGB. It is ignored if images are grayscale)";
-    storage << "Camera_RGB" << 1 << "\n";
+    //# Color order of the images (0: BGR, 1: RGB. It is ignored if images are grayscale)";
+    storage << "Camera_RGB" << 1;
 
-    storage << "#--------------------------------------------------------------------------------------------";
-    storage << "# ORB Parameters";
-    storage << "#--------------------------------------------------------------------------------------------" << "\n";
+    //#--------------------------------------------------------------------------------------------";
+    //# ORB Parameters";
+    //#--------------------------------------------------------------------------------------------";
 
-    storage << "# ORB Extractor: Number of features per image";
-    storage << " ORBextractor_nFeatures" << 1000 << "\n";
+    //# ORB Extractor: Number of features per image";
+    storage << "ORBextractor_nFeatures" << 1000;
 
-    storage << "# ORB Extractor: Scale factor between levels in the scale pyramid";
-    storage << "ORBextractor_scaleFactor" << 1.2 << "\n";
+    //# ORB Extractor: Scale factor between levels in the scale pyramid";
+    storage << "ORBextractor_scaleFactor" << 1.2;
 
-    storage << "# ORB Extractor: Number of levels in the scale pyramid";
-    storage << "ORBextractor_nLevels" << 8 << "\n";
+    //# ORB Extractor: Number of levels in the scale pyramid";
+    storage << "ORBextractor_nLevels" << 8;
 
-    storage << "# ORB Extractor: Fast threshold";
-    storage << "# Image is divided in a grid. At each cell FAST are extracted imposing a minimum response.";
-    storage << "# Firstly we impose iniThFAST. If no corners are detected we impose a lower value minThFAST";
-    storage << "# You can lower these values if your images have low contrast";
-    storage << "ORBextractor_iniThFAST" << 20 << "";
-    storage << "ORBextractor_minThFAST" << 7 << "\n";
+    //# ORB Extractor: Fast threshold";
+    //# Image is divided in a grid. At each cell FAST are extracted imposing a minimum response.";
+    //# Firstly we impose iniThFAST. If no corners are detected we impose a lower value minThFAST";
+    //# You can lower these values if your images have low contrast";
+    storage << "ORBextractor_iniThFAST" << 20;
+    storage << "ORBextractor_minThFAST" << 7;
 
-    storage << "#--------------------------------------------------------------------------------------------";
-    storage << "# Viewer Parameters";
-    storage << "#---------------------------------------------------------------------------------------------\n";
+    //#--------------------------------------------------------------------------------------------";
+    //# Viewer Parameters";
+    //#---------------------------------------------------------------------------------------------";
 
     storage << "Viewer_KeyFrameSize" << 0.05;
     storage << "Viewer_KeyFrameLineWidth" << 1;
@@ -210,6 +215,7 @@ void Stereo::setParameter() {
 		E		本征矩阵
 		F		基础矩阵
 	*/
+    cout << "开始双目标定" << endl;
     TermCriteria criteria = TermCriteria(TermCriteria::COUNT | TermCriteria::EPS, 30, 1e-6); // 终止条件
     stereoCalibrate(pinhole_l.objectPoints, pinhole_l.imagePoints, pinhole_r.imagePoints, 
                     pinhole_l.cameraMatrix, pinhole_l.distCoeffs,pinhole_r.cameraMatrix, pinhole_r.distCoeffs, 
@@ -235,6 +241,7 @@ void Stereo::setParameter() {
     //<< "pinhole_l.distCoeffs" << pinhole_l.distCoeffs << endl << "pinhole_r.cameraMatrix" << pinhole_r.cameraMatrix << endl \
     //<< "pinhole_r.distCoeffs" << pinhole_r.distCoeffs << endl << "pinhole_l.imageSize" << pinhole_l.imageSize \
     //<< endl << "R" << R << endl << "T" << T << endl;
+    cout << "开始立体校正" << endl;
     stereoRectify(pinhole_l.cameraMatrix, pinhole_l.distCoeffs, 
                   pinhole_r.cameraMatrix, pinhole_r.distCoeffs, 
                   pinhole_l.imageSize,
@@ -248,6 +255,9 @@ void Stereo::setParameter() {
     initUndistortRectifyMap(pinhole_r.cameraMatrix, pinhole_r.distCoeffs, 
                             R2, P2, pinhole_r.imageSize, CV_32FC1, map_r1, map_r2);
 
+    //判断双目标定成功在check.cpp里面画rectified左右目水平参考线肉眼看齐不齐
+    isCali = true;
+    cout << "双目标定和立体校正结束, 误差查看见check.cpp" << endl;
 }
 
 void Stereo::printInfo() {
@@ -288,80 +298,80 @@ void Stereo::printInfo() {
 
 void Stereo::writeYaml() {
     FileStorage storage(yaml_dir + yaml_name, FileStorage::WRITE);
-    storage << "#--------------------------------------------------------------------------------------------";
-    storage << "# Camera Parameters. Adjust them!";
-    storage << "#--------------------------------------------------------------------------------------------\n";
+    //#--------------------------------------------------------------------------------------------";
+    //# Camera Parameters. Adjust them!";
+    //#--------------------------------------------------------------------------------------------";
 
-    storage << "# Camera calibration and distortion parameters (OpenCV)";
+    //# Camera calibration and distortion parameters (OpenCV)";
     storage << "Camera_fx" << pinhole_l.cameraMatrix.at<double>(0,0);
     storage << "Camera_fy" << pinhole_l.cameraMatrix.at<double>(1,1);
     storage << "Camera_cx" << pinhole_l.cameraMatrix.at<double>(0,2);
-    storage << "Camera_cy" << pinhole_l.cameraMatrix.at<double>(1,2) << "\n";
+    storage << "Camera_cy" << pinhole_l.cameraMatrix.at<double>(1,2);
 
     storage << "Camera_k1" << pinhole_l.distCoeffs.at<double>(0,0);
     storage << "Camera_k2" << pinhole_l.distCoeffs.at<double>(0,1);
     storage << "Camera_p1" << pinhole_l.distCoeffs.at<double>(0,2);
     storage << "Camera_p2" << pinhole_l.distCoeffs.at<double>(0,3);
-    storage << "Camera_k3" << pinhole_l.distCoeffs.at<double>(0,4) << "\n";
+    storage << "Camera_k3" << pinhole_l.distCoeffs.at<double>(0,4);
 
     storage << "Camera_width" << pinhole_l.imageSize.width;
-    storage << "Camera_height" << pinhole_l.imageSize.height << "\n";
+    storage << "Camera_height" << pinhole_l.imageSize.height;
 
     //以下参数还有待根据具体情况决定怎么算
-    storage << "###-----STARTING FROM THIS LINE, EXCEPT STEREO RECTIFICATION, PARAMETERS ARE NOT CALCULATED YET! TO BE MODIFIED!------";
-    storage << "# Camera frames per second";
-    storage << "Camera_fps" << 47.90639384423901 << "\n";
+    //###-----STARTING FROM THIS LINE, EXCEPT STEREO RECTIFICATION, PARAMETERS ARE NOT CALCULATED YET! TO BE MODIFIED!------";
+    //# Camera frames per second";
+    storage << "Camera_fps" << 47.90639384423901;
 
-    storage << "# stereo baseline times fx";
-    storage << "Camera_bf" << 20.0 << "\n";
+    //# stereo baseline times fx";
+    storage << "Camera_bf" << 20.0;
 
-    storage << "# Color order of the images (0: BGR, 1: RGB. It is ignored if images are grayscale)";
-    storage << "Camera_RGB" << 1 << "\n";
+    //# Color order of the images (0: BGR, 1: RGB. It is ignored if images are grayscale)";
+    storage << "Camera_RGB" << 1;
 
-    storage << "# Close/Far threshold. Baseline times.";
-    storage << "ThDepth" << 35 << "\n";
+    //# Close/Far threshold. Baseline times.";
+    storage << "ThDepth" << 35;
 
-    storage << "#--------------------------------------------------------------------------------------------";
-    storage << "# Stereo Rectification. Only if you need to pre-rectify the images.";
-    storage << "# Camera.fx, .fy, etc must be the same as in LEFT.P";
-    storage << "#--------------------------------------------------------------------------------------------" << "\n";
+    //#--------------------------------------------------------------------------------------------";
+    //# Stereo Rectification. Only if you need to pre-rectify the images.";
+    //# Camera.fx, .fy, etc must be the same as in LEFT.P";
+    //#--------------------------------------------------------------------------------------------";
     storage << "Left_height" << pinhole_l.imageSize.height;
     storage << "Left_width" << pinhole_l.imageSize.width;
     storage << "Left_D" << pinhole_l.distCoeffs;
     storage << "Left_K" << pinhole_l.cameraMatrix;
     storage << "Left_R" << R1;
-    storage << "Left_P" << P1 << "\n";
+    storage << "Left_P" << P1;
 
     storage << "Right_height" << pinhole_r.imageSize.height;
     storage << "Right_width" << pinhole_r.imageSize.width;
     storage << "Right_D" << pinhole_r.distCoeffs;
     storage << "Right_K" << pinhole_r.cameraMatrix;
     storage << "Right_R" << R2;
-    storage << "Right_P" << P2 << "\n";
+    storage << "Right_P" << P2;
     
-    storage << "#--------------------------------------------------------------------------------------------";
-    storage << "# ORB Parameters";
-    storage << "#--------------------------------------------------------------------------------------------" << "\n";
+    //#--------------------------------------------------------------------------------------------";
+    //# ORB Parameters";
+    //#--------------------------------------------------------------------------------------------";
 
-    storage << "# ORB Extractor: Number of features per image";
-    storage << " ORBextractor_nFeatures" << 1200 << "\n";
+    //# ORB Extractor: Number of features per image";
+    storage << "ORBextractor_nFeatures" << 1200;
 
-    storage << "# ORB Extractor: Scale factor between levels in the scale pyramid";
-    storage << "ORBextractor_scaleFactor" << 1.2 << "\n";
+    //# ORB Extractor: Scale factor between levels in the scale pyramid";
+    storage << "ORBextractor_scaleFactor" << 1.2;
 
-    storage << "# ORB Extractor: Number of levels in the scale pyramid";
-    storage << "ORBextractor_nLevels" << 8 << "\n";
+    //# ORB Extractor: Number of levels in the scale pyramid";
+    storage << "ORBextractor_nLevels" << 8;
 
-    storage << "# ORB Extractor: Fast threshold";
-    storage << "# Image is divided in a grid. At each cell FAST are extracted imposing a minimum response.";
-    storage << "# Firstly we impose iniThFAST. If no corners are detected we impose a lower value minThFAST";
-    storage << "# You can lower these values if your images have low contrast";
-    storage << "ORBextractor_iniThFAST" << 20 << "";
-    storage << "ORBextractor_minThFAST" << 7 << "\n";
+    //# ORB Extractor: Fast threshold";
+    //# Image is divided in a grid. At each cell FAST are extracted imposing a minimum response.";
+    //# Firstly we impose iniThFAST. If no corners are detected we impose a lower value minThFAST";
+    //# You can lower these values if your images have low contrast";
+    storage << "ORBextractor_iniThFAST" << 20;
+    storage << "ORBextractor_minThFAST" << 7;
 
-    storage << "#--------------------------------------------------------------------------------------------";
-    storage << "# Viewer Parameters";
-    storage << "#---------------------------------------------------------------------------------------------\n";
+    //#--------------------------------------------------------------------------------------------";
+    //# Viewer Parameters";
+    //#---------------------------------------------------------------------------------------------";
 
     storage << "Viewer_KeyFrameSize" << 0.05;
     storage << "Viewer_KeyFrameLineWidth" << 1;

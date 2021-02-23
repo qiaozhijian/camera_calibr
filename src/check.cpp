@@ -16,13 +16,13 @@ using namespace std;
 
 int main(int argc, char *argv[]) {
     cv::CommandLineParser parser(argc, argv,
-                                 "{w|11|}{h|8|}{s|15|}{d|/media/qzj/Document/grow/research/slamDataSet/sweepRobot/round2/cali|}{show|true|}{help||}");
+                                 "{w|11|}{h|8|}{s|15|}{d|/home/warren/Documents/CLionProj/Camra_Calibration/stereo_calibr/cali/|}{show|true|}{help||}");
     if (parser.has("help")) {
         parser.printMessage();
         return 0;
     }
     string root_path = parser.get<string>("d");
-    string root_result_path = root_path + "/result/";
+    string root_result_path = root_path + "result/";
     createDirectory(root_result_path);
     string configYaml = root_result_path + "data_params_matlab.yaml";
 

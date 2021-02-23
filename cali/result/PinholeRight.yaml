@@ -1,0 +1,30 @@
+%YAML:1.0
+---
+Camera_fx: 6.5226999458826083e+02
+Camera_fy: 6.5245880754840493e+02
+Camera_cx: 3.0630305418001797e+02
+Camera_cy: 2.4005631237834461e+02
+Camera_k1: 1.2582905924065696e-01
+Camera_k2: 1.4221344684999301e-01
+Camera_p1: 1.0048678357125987e-03
+Camera_p2: -7.9267217244248424e-03
+Camera_k3: -3.7269546065013790e+00
+Camera_width: 640
+Camera_height: 480
+Camera_fps: 20.
+Camera_RGB: 1
+ORBextractor_nFeatures: 1000
+ORBextractor_scaleFactor: 1.2000000000000000e+00
+ORBextractor_nLevels: 8
+ORBextractor_iniThFAST: 20
+ORBextractor_minThFAST: 7
+Viewer_KeyFrameSize: 5.0000000000000003e-02
+Viewer_KeyFrameLineWidth: 1
+Viewer_GraphLineWidth: 9.0000000000000002e-01
+Viewer_PointSize: 2
+Viewer_CameraSize: 8.0000000000000002e-02
+Viewer_CameraLineWidth: 3
+Viewer_ViewpointX: 0
+Viewer_ViewpointY: -6.9999999999999996e-01
+Viewer_ViewpointZ: -1.8000000000000000e+00
+Viewer_ViewpointF: 500
