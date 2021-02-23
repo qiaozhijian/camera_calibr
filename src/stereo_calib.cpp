@@ -39,8 +39,10 @@ int main(int argc, char *argv[]) {
     pinhole_left.setParameter();
     pinhole_right.setParameter();
     if(pinhole_left.isCali && pinhole_right.isCali){//单目标定成功
+        cout << "左目标定结果:" << endl;
         pinhole_left.printInfo();
         pinhole_left.writeYaml();
+        cout << "右目标定结果:" << endl;
         pinhole_right.printInfo();
         pinhole_right.writeYaml();
         //双目标定

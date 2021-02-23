@@ -114,7 +114,8 @@ void Pinhole::setParameter(){
 }
 
 void Pinhole::printInfo(){
-    // 保存标定结果
+    // 输出标定结果
+    cout << "单目标定结果:" << endl;
     cout << "相机内参数矩阵" << endl;
     cout << cameraMatrix << endl << endl;
     cout << "相机畸变系数" << endl;
@@ -144,7 +145,51 @@ void Pinhole::writeYaml(){
     storage << "Camera_k3" << distCoeffs.at<double>(0,4);
 
     storage << "Camera_width" << imageSize.width;
-    storage << "Camera_height" << imageSize.height;
+    storage << "Camera_height" << imageSize.height << "\n";
+
+    //以下参数还有待根据具体情况决定怎么算
+    storage << "###-----STARTING FROM THIS LINE, PARAMETERS ARE NOT CALCULATED YET! TO BE MODIFIED!------";
+    storage << "# Camera frames per second";
+    storage << "Camera_fps" << 20.0 << "\n";
+
+    storage << "# Color order of the images (0: BGR, 1: RGB. It is ignored if images are grayscale)";
+    storage << "Camera_RGB" << 1 << "\n";
+
+    storage << "#--------------------------------------------------------------------------------------------";
+    storage << "# ORB Parameters";
+    storage << "#--------------------------------------------------------------------------------------------" << "\n";
+
+    storage << "# ORB Extractor: Number of features per image";
+    storage << " ORBextractor_nFeatures" << 1000 << "\n";
+
+    storage << "# ORB Extractor: Scale factor between levels in the scale pyramid";
+    storage << "ORBextractor_scaleFactor" << 1.2 << "\n";
+
+    storage << "# ORB Extractor: Number of levels in the scale pyramid";
+    storage << "ORBextractor_nLevels" << 8 << "\n";
+
+    storage << "# ORB Extractor: Fast threshold";
+    storage << "# Image is divided in a grid. At each cell FAST are extracted imposing a minimum response.";
+    storage << "# Firstly we impose iniThFAST. If no corners are detected we impose a lower value minThFAST";
+    storage << "# You can lower these values if your images have low contrast";
+    storage << "ORBextractor_iniThFAST" << 20 << "";
+    storage << "ORBextractor_minThFAST" << 7 << "\n";
+
+    storage << "#--------------------------------------------------------------------------------------------";
+    storage << "# Viewer Parameters";
+    storage << "#---------------------------------------------------------------------------------------------\n";
+
+    storage << "Viewer_KeyFrameSize" << 0.05;
+    storage << "Viewer_KeyFrameLineWidth" << 1;
+    storage << "Viewer_GraphLineWidth" << 0.9;
+    storage << "Viewer_PointSize" << 2;
+    storage << "Viewer_CameraSize" << 0.08;
+    storage << "Viewer_CameraLineWidth" << 3;
+    storage << "Viewer_ViewpointX" << 0;
+    storage << "Viewer_ViewpointY" << -0.7;
+    storage << "Viewer_ViewpointZ" << -1.8;
+    storage << "Viewer_ViewpointF" << 500;
+
     storage.release();
 }
 
@@ -207,6 +252,7 @@ void Stereo::setParameter() {
 
 void Stereo::printInfo() {
     //双目标定结果
+    cout << "双目标定结果：" << endl;
     cout << "image size" << endl;
     cout << pinhole_l.imageSize << endl;
     cout << "cameraMatrix_L" << endl;
@@ -227,6 +273,7 @@ void Stereo::printInfo() {
     cout << F << endl;
     
     //立体校正结果
+    cout << "立体校正结果：" << endl;
     cout << "R1：" << endl;
     cout << R1 << endl;
     cout << "R2：" << endl;
@@ -246,17 +293,86 @@ void Stereo::writeYaml() {
     storage << "#--------------------------------------------------------------------------------------------\n";
 
     storage << "# Camera calibration and distortion parameters (OpenCV)";
-    storage << "Camera_fx" << cameraMatrix.at<double>(0,0);
-    storage << "Camera_fy" << cameraMatrix.at<double>(1,1);
-    storage << "Camera_cx" << cameraMatrix.at<double>(0,2);
-    storage << "Camera_cy" << cameraMatrix.at<double>(1,2) << "\n";
-    storage << "Camera_k1" << distCoeffs.at<double>(0,0);
-    storage << "Camera_k2" << distCoeffs.at<double>(0,1);
-    storage << "Camera_p1" << distCoeffs.at<double>(0,2);
-    storage << "Camera_p2" << distCoeffs.at<double>(0,3);
-    storage << "Camera_k3" << distCoeffs.at<double>(0,4);
+    storage << "Camera_fx" << pinhole_l.cameraMatrix.at<double>(0,0);
+    storage << "Camera_fy" << pinhole_l.cameraMatrix.at<double>(1,1);
+    storage << "Camera_cx" << pinhole_l.cameraMatrix.at<double>(0,2);
+    storage << "Camera_cy" << pinhole_l.cameraMatrix.at<double>(1,2) << "\n";
 
-    storage << "Camera_width" << imageSize.width;
-    storage << "Camera_height" << imageSize.height;
+    storage << "Camera_k1" << pinhole_l.distCoeffs.at<double>(0,0);
+    storage << "Camera_k2" << pinhole_l.distCoeffs.at<double>(0,1);
+    storage << "Camera_p1" << pinhole_l.distCoeffs.at<double>(0,2);
+    storage << "Camera_p2" << pinhole_l.distCoeffs.at<double>(0,3);
+    storage << "Camera_k3" << pinhole_l.distCoeffs.at<double>(0,4) << "\n";
+
+    storage << "Camera_width" << pinhole_l.imageSize.width;
+    storage << "Camera_height" << pinhole_l.imageSize.height << "\n";
+
+    //以下参数还有待根据具体情况决定怎么算
+    storage << "###-----STARTING FROM THIS LINE, EXCEPT STEREO RECTIFICATION, PARAMETERS ARE NOT CALCULATED YET! TO BE MODIFIED!------";
+    storage << "# Camera frames per second";
+    storage << "Camera_fps" << 47.90639384423901 << "\n";
+
+    storage << "# stereo baseline times fx";
+    storage << "Camera_bf" << 20.0 << "\n";
+
+    storage << "# Color order of the images (0: BGR, 1: RGB. It is ignored if images are grayscale)";
+    storage << "Camera_RGB" << 1 << "\n";
+
+    storage << "# Close/Far threshold. Baseline times.";
+    storage << "ThDepth" << 35 << "\n";
+
+    storage << "#--------------------------------------------------------------------------------------------";
+    storage << "# Stereo Rectification. Only if you need to pre-rectify the images.";
+    storage << "# Camera.fx, .fy, etc must be the same as in LEFT.P";
+    storage << "#--------------------------------------------------------------------------------------------" << "\n";
+    storage << "Left_height" << pinhole_l.imageSize.height;
+    storage << "Left_width" << pinhole_l.imageSize.width;
+    storage << "Left_D" << pinhole_l.distCoeffs;
+    storage << "Left_K" << pinhole_l.cameraMatrix;
+    storage << "Left_R" << R1;
+    storage << "Left_P" << P1 << "\n";
+
+    storage << "Right_height" << pinhole_r.imageSize.height;
+    storage << "Right_width" << pinhole_r.imageSize.width;
+    storage << "Right_D" << pinhole_r.distCoeffs;
+    storage << "Right_K" << pinhole_r.cameraMatrix;
+    storage << "Right_R" << R2;
+    storage << "Right_P" << P2 << "\n";
+    
+    storage << "#--------------------------------------------------------------------------------------------";
+    storage << "# ORB Parameters";
+    storage << "#--------------------------------------------------------------------------------------------" << "\n";
+
+    storage << "# ORB Extractor: Number of features per image";
+    storage << " ORBextractor_nFeatures" << 1200 << "\n";
+
+    storage << "# ORB Extractor: Scale factor between levels in the scale pyramid";
+    storage << "ORBextractor_scaleFactor" << 1.2 << "\n";
+
+    storage << "# ORB Extractor: Number of levels in the scale pyramid";
+    storage << "ORBextractor_nLevels" << 8 << "\n";
+
+    storage << "# ORB Extractor: Fast threshold";
+    storage << "# Image is divided in a grid. At each cell FAST are extracted imposing a minimum response.";
+    storage << "# Firstly we impose iniThFAST. If no corners are detected we impose a lower value minThFAST";
+    storage << "# You can lower these values if your images have low contrast";
+    storage << "ORBextractor_iniThFAST" << 20 << "";
+    storage << "ORBextractor_minThFAST" << 7 << "\n";
+
+    storage << "#--------------------------------------------------------------------------------------------";
+    storage << "# Viewer Parameters";
+    storage << "#---------------------------------------------------------------------------------------------\n";
+
+    storage << "Viewer_KeyFrameSize" << 0.05;
+    storage << "Viewer_KeyFrameLineWidth" << 1;
+    storage << "Viewer_GraphLineWidth" << 0.9;
+    storage << "Viewer_PointSize" << 2;
+    storage << "Viewer_CameraSize" << 0.08;
+    storage << "Viewer_CameraLineWidth" << 3;
+    storage << "Viewer_ViewpointX" << 0;
+    storage << "Viewer_ViewpointY" << -0.7;
+    storage << "Viewer_ViewpointZ" << -1.8;
+    storage << "Viewer_ViewpointF" << 500;
+
     storage.release();
 }
