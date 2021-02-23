@@ -49,7 +49,8 @@ include_directories(
 
 add_library(mylib SHARED
         src/util.cpp
-        src/pinhole_stereo.cpp)
+        src/pinhole_stereo.cpp
+        )
 
 target_link_libraries(mylib
         ${Boost_LIBRARIES}
@@ -65,7 +66,7 @@ target_link_libraries( pinhole_calib mylib)
 # 双目标定和双目矫正
 add_executable( stereo_calib src/stereo_calib.cpp)
 # 链接OpenCV库
-target_link_libraries( pinhole_calib mylib)
+target_link_libraries( stereo_calib mylib)
 
 # 双目标定和双目矫正
 add_executable( check src/check.cpp)
