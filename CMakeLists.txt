@@ -59,24 +59,19 @@ target_link_libraries(mylib
 )
 
 # 单目标定
-add_executable( pinhole_calib src/pinhole_calib.cpp)
-# 链接OpenCV库
+add_executable( pinhole_calib exec/pinhole_calib.cpp)
 target_link_libraries( pinhole_calib mylib)
 
 # 双目标定和双目矫正
-add_executable( stereo_calib src/stereo_calib.cpp)
-# 链接OpenCV库
+add_executable( stereo_calib exec/stereo_calib.cpp)
 target_link_libraries( stereo_calib mylib)
 
 # 双目标定和双目矫正
-add_executable( cali_mat src/cali_mat.cpp )
-# 链接OpenCV库
+add_executable( cali_mat exec/cali_mat.cpp )
 target_link_libraries( cali_mat mylib)
 
-add_executable( check src/check.cpp )
-# 链接OpenCV库
+add_executable( check exec/check.cpp )
 target_link_libraries( check mylib)
 
-add_executable( file src/file.cpp )
-# 链接OpenCV库
+add_executable( file exec/file.cpp )
 target_link_libraries( file mylib)
