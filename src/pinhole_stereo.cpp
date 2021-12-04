@@ -152,49 +152,6 @@ void Pinhole::writeYaml(){
     storage << "Camera_width" << imageSize.width;
     storage << "Camera_height" << imageSize.height;
 
-    //以下参数还有待根据具体情况决定怎么算
-    //###-----STARTING FROM THIS LINE, PARAMETERS ARE NOT CALCULATED YET! TO BE MODIFIED!------";
-    //# Camera frames per second";
-    storage << "Camera_fps" << 20.0;
-
-    //# Color order of the images (0: BGR, 1: RGB. It is ignored if images are grayscale)";
-    storage << "Camera_RGB" << 1;
-
-    //#--------------------------------------------------------------------------------------------";
-    //# ORB Parameters";
-    //#--------------------------------------------------------------------------------------------";
-
-    //# ORB Extractor: Number of features per image";
-    storage << "ORBextractor_nFeatures" << 1000;
-
-    //# ORB Extractor: Scale factor between levels in the scale pyramid";
-    storage << "ORBextractor_scaleFactor" << 1.2;
-
-    //# ORB Extractor: Number of levels in the scale pyramid";
-    storage << "ORBextractor_nLevels" << 8;
-
-    //# ORB Extractor: Fast threshold";
-    //# Image is divided in a grid. At each cell FAST are extracted imposing a minimum response.";
-    //# Firstly we impose iniThFAST. If no corners are detected we impose a lower value minThFAST";
-    //# You can lower these values if your images have low contrast";
-    storage << "ORBextractor_iniThFAST" << 20;
-    storage << "ORBextractor_minThFAST" << 7;
-
-    //#--------------------------------------------------------------------------------------------";
-    //# Viewer Parameters";
-    //#---------------------------------------------------------------------------------------------";
-
-    storage << "Viewer_KeyFrameSize" << 0.05;
-    storage << "Viewer_KeyFrameLineWidth" << 1;
-    storage << "Viewer_GraphLineWidth" << 0.9;
-    storage << "Viewer_PointSize" << 2;
-    storage << "Viewer_CameraSize" << 0.08;
-    storage << "Viewer_CameraLineWidth" << 3;
-    storage << "Viewer_ViewpointX" << 0;
-    storage << "Viewer_ViewpointY" << -0.7;
-    storage << "Viewer_ViewpointZ" << -1.8;
-    storage << "Viewer_ViewpointF" << 500;
-
     storage.release();
 }
 
